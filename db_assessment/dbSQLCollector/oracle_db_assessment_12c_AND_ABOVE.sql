@@ -1211,11 +1211,42 @@ SELECT '&&v_host'
        hsm.AVERAGE+(2*hsm.STANDARD_DEVIATION) "PERC95",
        MAXVAL                                 "PERC100"
 FROM   DBA_HIST_SYSMETRIC_SUMMARY hsm
-WHERE  hsm.snap_id BETWEEN '&&v_min_snapid' AND '&&v_max_snapid')
+WHERE  hsm.snap_id BETWEEN '&&v_min_snapid' AND '&&v_max_snapid'),
+vsysmetricsummperhour as (
+    SELECT pkey,
+       hsm.dbid,
+       hsm.instance_number,
+       TO_CHAR(hsm.begin_time, 'hh24')          hour,
+       hsm.metric_name,
+       hsm.metric_unit,
+       AVG(hsm.PERC95)                           avg_value,
+       STATS_MODE(hsm.PERC95)                    mode_value,
+       MEDIAN(hsm.PERC95)                        median_value,
+       MIN(hsm.PERC95)                           min_value,
+       MAX(hsm.PERC95)                           max_value,
+       SUM(hsm.PERC95)                           sum_value,
+       PERCENTILE_CONT(0.5)
+         within GROUP (ORDER BY hsm.PERC95 DESC) AS "PERC50",
+       PERCENTILE_CONT(0.25)
+         within GROUP (ORDER BY hsm.PERC95 DESC) AS "PERC75",
+       PERCENTILE_CONT(0.10)
+         within GROUP (ORDER BY hsm.PERC95 DESC) AS "PERC90",
+       PERCENTILE_CONT(0.05)
+         within GROUP (ORDER BY hsm.PERC95 DESC) AS "PERC95",
+       PERCENTILE_CONT(0)
+         within GROUP (ORDER BY hsm.PERC95 DESC) AS "PERC100"
+    FROM vsysmetricsumm hsm
+    GROUP  BY pkey,
+            hsm.dbid,
+            hsm.instance_number,
+            TO_CHAR(hsm.begin_time, 'hh24'),
+            hsm.metric_name,
+            hsm.metric_unit--, dhsnap.STARTUP_TIME
+)
 SELECT pkey ||' , '|| dbid ||' , '|| instance_number ||' , '|| hour ||' , '|| metric_name ||' , '||
        metric_unit ||' , '|| avg_value ||' , '|| mode_value ||' , '|| median_value ||' , '|| min_value ||' , '|| max_value ||' , '||
 	   sum_value ||' , '|| PERC50 ||' , '|| PERC75 ||' , '|| PERC90 ||' , '|| PERC95 ||' , '|| PERC100
-FROM vsysmetricsumm;
+FROM vsysmetricsummperhour; 
 
 spool off
 
