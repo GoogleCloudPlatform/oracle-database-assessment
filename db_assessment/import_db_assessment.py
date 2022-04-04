@@ -361,6 +361,10 @@ def importDataframeToBQ(gcpProjectName,bqDataset,tableName,tableSchemas,df,trans
     else:
         table_id = str(client.project) + '.' + str(bqDataset) + '.' + str(tableName)
 
+    write_disposition="WRITE_TRUNCATE"
+    if str(tableName).lower() =="opkeylog":
+        write_disposition="WRITE_APPEND"
+
     job_config = bigquery.LoadJobConfig(
         # Specify a (partial) schema. All columns are always written to the
         # table. The schema is used to assist in data type definitions.
@@ -368,7 +372,7 @@ def importDataframeToBQ(gcpProjectName,bqDataset,tableName,tableSchemas,df,trans
         # Optionally, set the write disposition. BigQuery appends loaded rows
         # to an existing table by default, but with WRITE_TRUNCATE write
         # disposition it replaces the table with the loaded data.
-        write_disposition="WRITE_TRUNCATE",
+        write_disposition=write_disposition,
     )
 
     job = client.load_table_from_dataframe(
