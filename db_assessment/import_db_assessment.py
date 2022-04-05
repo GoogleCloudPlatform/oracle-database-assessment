@@ -18,7 +18,9 @@ import os
 import glob
 import sys
 import pandas as pd
-
+import datetime
+# ct stores current time
+ct = datetime.datetime.now()
 # Manages command line flags and arguments
 import argparse
 
@@ -286,6 +288,7 @@ def importAllDataframeToBQ(args,gcpProjectName,bqDataset,transformersTablesSchem
             if str(tableName).lower()  =="opkeylog":
                 df = dbAssessmentDataframes[tableName]
                 df['CMNT']= transformersParameters['importcomment']
+                df['LOADTOBQDATE']= ct
 
             # Import the given CSV fileName into
             sucessImport = importDataframeToBQ(gcpProjectName,bqDataset,str(tableName).lower(),tableSchemas,dbAssessmentDataframes[tableName],transformersParameters)
@@ -390,9 +393,11 @@ def importDataframeToBQ(gcpProjectName,bqDataset,tableName,tableSchemas,df,trans
     # Returns True if sucessfull 
     return True
 
-def addcomment(fileName,comment):
+def adddetails(fileName,comment):
     df = pd.read_csv(fileName, index_col=False)
-    df["CMNT"] = comment
+    if comment:
+        df["CMNT"] = comment
+    df['LOADTOBQDATE']= ct
     df.to_csv(fileName,index=False)
 
 def importAllCSVsToBQ(gcpProjectName,bqDataset,fileList,transformersTablesSchema,skipLeadingRows,transformersParameters):
@@ -418,9 +423,9 @@ def importAllCSVsToBQ(gcpProjectName,bqDataset,fileList,transformersTablesSchema
         importTable = True
         doNotImportList = [table.strip().lower() for table in transformersParameters['do_not_import']]
 
-        if str(tableName).lower()  =="opkeylog" and transformersParameters['importcomment']:
+        if str(tableName).lower()  =="opkeylog":
             skipLeadingRows=1
-            addcomment(fileName,transformersParameters['importcomment'])
+            adddetails(fileName,transformersParameters['importcomment'])
 
         if tableName.lower() not in doNotImportList:
 
