@@ -710,12 +710,11 @@ def populateBT(tableName,df,dataframeornot,invalidfiles,btsource,rowsimported,im
                     pkeygroupby=df.groupby(['PKEY']).size()
                     pkeycount=pkeygroupby.to_dict()
                     for pkeyname,pkeyname_rowcount in pkeycount.items():
-                        if 'Elapsed' not in pkeyname: # Once #142 ( BUG: In the validate log files please remove any lines containing 'Elapsed' keywords with timings) remove this condition
-                            tmpdataFrame=pd.DataFrame() 
-                            tmpdataFramedict = {"Target Table":tableName,"Distinct Pkey":pkeyname,"Import Status":"SUCCESS","Loaded rows":pkeyname_rowcount}
-                            tmpdataFrame = tmpdataFrame.append(tmpdataFramedict, ignore_index = True)  
-                            if len(tmpdataFrame) >0:
-                                importresults = pd.concat([importresults, tmpdataFrame], ignore_index = True, axis = 0)
+                        tmpdataFrame=pd.DataFrame() 
+                        tmpdataFramedict = {"Target Table":tableName,"Distinct Pkey":pkeyname,"Import Status":"SUCCESS","Loaded rows":pkeyname_rowcount}
+                        tmpdataFrame = tmpdataFrame.append(tmpdataFramedict, ignore_index = True)  
+                        if len(tmpdataFrame) >0:
+                            importresults = pd.concat([importresults, tmpdataFrame], ignore_index = True, axis = 0)
 
         else:
             fileName=invalidfiles  # when called from importCSVToBQ
