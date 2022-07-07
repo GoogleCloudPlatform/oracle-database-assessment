@@ -16,6 +16,7 @@
 import pandas as pd
 import numpy as np
 import csv,os, warnings
+import base64,hashlib
 warnings.simplefilter('error', pd.errors.ParserWarning)
 
 import json
@@ -298,6 +299,9 @@ def getDataFrameFromCSV(csvFileName,tableName,skipRows,args,transformersTablesSc
         # Removing index from dataframe
         df.reset_index(drop=True, inplace=True)
 
+        ## Mask data
+        df = encryptdata(df,tableName, transformersTablesSchema)
+
         # In case we need to clean some headers from dataframe
         if paramCleanDFHeaders:
             columList = df.columns.values.tolist()
@@ -311,6 +315,42 @@ def getDataFrameFromCSV(csvFileName,tableName,skipRows,args,transformersTablesSc
         return False
 
     return df
+
+def encryptdata(df,tableName, transformersTablesSchema):
+    maskcols = transformersTablesSchema["enable_data_masking"]
+    listcols = []
+    for item in maskcols:
+        tbl = item.split(".")[0]
+        if tbl==tableName:
+            listcols.append(item.split(".")[1])
+    print(listcols)
+    for col in listcols:
+        df[col.upper()] = df[col.upper()].apply(get_hashid)
+    return df
+
+
+def get_hashid(key: str, method: str = 'sha256', nchar: int = 32):
+    """
+    Generate a hash identifier.
+    :param key: input string for the hash algorithm.
+    :param method: an algorithm name. Select from hashlib.algorithms_guaranteed
+    or hashlib.algorithms_available.
+    :param nchar: number of the first character to return. Set 0 for all characters.
+    :return: a string.
+    """
+    h = hashlib.new(method)
+    h.update(key.encode())
+
+    # for shake, the digest size is variable in length, let's just put it 32 bytes
+    if h.digest_size == 0:
+        hash_id = base64.b32encode(h.digest(32)).decode().replace("=", "")
+    else:
+        hash_id = base64.b32encode(h.digest()).decode().replace("=", "")
+
+    if nchar > 0:
+        hash_id = hash_id[:nchar]
+
+    return hash_id
 
 def getDFHeadersFromTransformers(tableName,transformersTablesSchema):
 

@@ -123,6 +123,9 @@ def runMain(args):
         if len(sqlversionslist) > 1:
             sys.exit('\nERROR:  Importing multiple SQL versions is not supported. Please use flag fileterbysqlversion to filter SQL versions, For example: -filterbysqlversion 2.0.3"\n')
 
+        if args.maskdata is not None:
+            transformersParameters['maskdata'] = str(args.maskdata)
+
         # Getting file pattern for find config files in the OS to be imported
         csvFilesLocationPatternOPConfig = 'opConfig/*.csv'
 
@@ -312,7 +315,7 @@ def argumentsParser():
     parser.add_argument("-filterbydbversion", type=str, default='', help="To import only specific db version")
     parser.add_argument("-filterbysqlversion", type=str, default='', help="To import only specific SQL version")
     parser.add_argument("-skipvalidations",  default=False, help="To skip all the file Validations", action="store_true")
-
+    parser.add_argument("-maskdata",  default=True, help="To enable data masking", action="store_true")
     # Execute the parse_args() method. Variable args is a namespace type
     args = parser.parse_args()
 
